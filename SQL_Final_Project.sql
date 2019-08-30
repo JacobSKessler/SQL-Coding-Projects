@@ -168,6 +168,7 @@ values
 ('Ghost','behind you','321xxxxxxx')
 ;
 
+/*At recomendation from instructor all books contained in this table are considered checked out and if past due checked out and late*/
 insert into tbl_Book_Loans (BookID, BranchID, CardNo, DateOut, DateDue)
 values/* date format YYYY-MM-DD*/
 (1,1,1,'2019-08-05','2019-08-12'),
@@ -231,52 +232,45 @@ where tbl_Books.Title = 'The Lost Tribe'
 and tbl_Library_Branch.BranchName = 'Sharpstown'
 ;
 
-/*How many copies of the book titled "The Lost Tribe" are owned by each library branch?*/
+/*2.How many copies of the book titled "The Lost Tribe" are owned by each library branch?*/
 select tbl_Book_Copies.Number_Of_Copies, tbl_Books.Title, tbl_Library_Branch.BranchName from tbl_Book_Copies
 inner join tbl_Books on tbl_Book_Copies.BookID = tbl_Books.BookID
 inner join tbl_Library_Branch on tbl_Book_Copies.BranchID = tbl_Library_Branch.BranchID
 where tbl_Books.Title = 'The Lost Tribe'
 ;
 
-/*Retrieve the names of all borrowers who do not have any books checked out.*/
-select tbl_Borrower.Name from tbl_Borrower
-inner join tbl_Book_Loans on tbl_Borrower.CardNo = tbl_Book_Loans.CardNo 
-and (GETDATE() >= tbl_Book_Loans.DateOut
-and GETDATE() <= tbl_Book_Loans.DateDue)
+/*3.Retrieve the names of all borrowers who do not have any books checked out.*/
+select * from tbl_Book_Loans
+inner join tbl_Borrower on tbl_Borrower.CardNo = tbl_Book_Loans.CardNo 
+where DateOut = null
 ;
 
-/*For each book that is loaned out from the "Sharpstown" branch and whose DueDate is today, retrieve the book title, the borrower's name, and the borrower's address.*/
+/*4.For each book that is loaned out from the "Sharpstown" branch and whose DueDate is today, retrieve the book title, the borrower's name, and the borrower's address.*/
 select tbl_Books.Title, tbl_Borrower.Name, tbl_Borrower.Address from tbl_Borrower
 inner join tbl_Book_Loans on tbl_Borrower.CardNo = tbl_Book_Loans.CardNo
 inner join tbl_Books on tbl_Book_Loans.BookID = tbl_Books.BookID
 inner join tbl_Library_Branch on tbl_Book_Loans.BranchID = tbl_Library_Branch.BranchID
-where tbl_Book_Loans.DateDue = GETDATE() and tbl_Library_Branch.BranchName = 'Sharpstown'
+where tbl_Book_Loans.DateDue = format(GETDATE(), 'yyyy-MM-dd') and tbl_Library_Branch.BranchName = 'Sharpstown'
 ;
 
-/*For each library branch, retrieve the branch name and the total number of books loaned out from that branch*/
+/*5.For each library branch, retrieve the branch name and the total number of books loaned out from that branch*/
 select tbl_Library_Branch.BranchName, count(tbl_Book_Loans.DateDue) from tbl_Library_Branch
 inner join tbl_Book_Loans on tbl_Book_Loans.BranchID = tbl_Library_Branch.BranchID
-where 
-(GETDATE() >= tbl_Book_Loans.DateOut
-and GETDATE() <= tbl_Book_Loans.DateDue)
 group by tbl_Library_Branch.BranchName
 ;
 
-/*Retrieve the names, addresses, and the number of books checked out for all borrowers who have more than five books checked out.*/
+/*6.Retrieve the names, addresses, and the number of books checked out for all borrowers who have more than five books checked out.*/
 select tbl_Borrower.Name, tbl_Borrower.Address, count(tbl_Book_Loans.BookID) from tbl_Borrower
 inner join tbl_Book_Loans on tbl_Borrower.CardNo = tbl_Book_Loans.CardNo
-where 
-(GETDATE() >= tbl_Book_Loans.DateOut
-and GETDATE() <= tbl_Book_Loans.DateDue)
 group by tbl_Borrower.Name, tbl_Borrower.Address
 having count(*)>5
 ;
 
-/*For each book authored (or co-authored) by "Stephen King", retrieve the title and the number of copies owned by the library branch whose name is "Central".*/
-select tbl_Books.Title, tbl_Book_Copies.Number_Of_Copies from tbl_Books
+/*7.For each book authored (or co-authored) by "Stephen King", retrieve the title and the number of copies owned by the library branch whose name is "Central".*/
+select tbl_Books.Title, tbl_Book_Copies.Number_Of_Copies, tbl_Library_Branch.BranchName from tbl_Books
 full outer join tbl_Book_Copies on tbl_Books.BookID = tbl_Book_Copies.BookID
-full outer join tbl_Publisher on tbl_Books.PublisherName = tbl_Publisher.PublisherName
+full outer join tbl_Book_Authors on tbl_Book_Authors.BookID = tbl_Books.BookID
 full outer join tbl_Library_Branch on tbl_Book_Copies.BranchID = tbl_Library_Branch.BranchID
 where tbl_Library_Branch.BranchName = 'Central'
-and tbl_Publisher.PublisherName = 'Stephen King'
+and tbl_Book_Authors.AuthorName = 'Stephen King'
 ;
